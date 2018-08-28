@@ -35,8 +35,8 @@ Rect* artHaarDetection(Mat& frame) {
     for ( size_t i = 0; i < patterns.size(); i++ )
     {
         __android_log_print(ANDROID_LOG_DEBUG, "Haar Hello", "cascade detected: %d", (int)(i + 1));
-        //Point center( patterns[i].x + patterns[i].width/2, patterns[i].y + patterns[i].height/2 );
-        //ellipse( frame, center, Size( patterns[i].width/2, patterns[i].height/2 ), 0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0 );
+        Point center( patterns[i].x + patterns[i].width/2, patterns[i].y + patterns[i].height/2 );
+        ellipse( frame, center, Size( patterns[i].width/2, patterns[i].height/2 ), 0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0 );
         return &(patterns[0]);
     }
 
@@ -58,19 +58,27 @@ void detectContours(Mat& frame, Rect patternRoi) {
         Point( morph_size, morph_size ) );
     morphologyEx( dst, dst, MORPH_CLOSE, element );
 
-
     //find contours
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy;
-
-    // Find contours
     findContours( dst, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
-    __android_log_print(ANDROID_LOG_DEBUG, "Haar Hello", "detected countours: %d", (int)contours.size());
+
+    // filter contours
+    vector<vector<Point> > resContours;
+    for( int i = 0; i < contours.size(); i++ ) {
+         if (arcLength(contours[i], true) > 20) {
+            resContours.push_back(contours[i]);
+         }
+    }
+
+    __android_log_print(ANDROID_LOG_DEBUG, "Haar Hello", "detected countours: %d", (int)resContours.size());
     /// Draw contours
-    for( int i = 0; i < contours.size(); i++ )
-    {
-        Scalar color = Scalar( 200, 80, 80 );
-        drawContours( frame, contours, i, color, 2, 8, hierarchy, 0, Point(patternRoi.x, patternRoi.y) );
+    if (resContours.size() < 10) {
+    for( int i = 0; i < resContours.size(); i++ )
+        {
+            Scalar color = Scalar( 200, 80, 80 );
+            drawContours( frame, resContours, i, color, 2, 8, hierarchy, 0, Point(patternRoi.x, patternRoi.y) );
+        }
     }
 
 }
